@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="হিসাব — ফান্ড ভিত্তিক জমা ও খরচের খাতা। ইন্টারনেট ছাড়াই চলে।">
+<meta name="theme-color" content="#14302b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314302b'/%3E%3Cpath d='M9 8v16M23 8v16M9 16h14' stroke='%23e7f3ee' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>হিসাব — ফান্ড ও খরচের খাতা</title>
+<style>
+:root{
+  --bg:#f3f4f0;
+  --surface:#ffffff;
+  --ink:#14302b;
+  --ink-2:#1f4a43;
+  --ink-soft:#2c5a52;
+  --text:#18231f;
+  --muted:#6b7772;
+  --faint:#97a19b;
+  --line:#e3e6df;
+  --line-2:#eef0eb;
+  --income:#1d7656;
+  --income-bg:#e6f2ed;
+  --expense:#a8422c;
+  --expense-bg:#f8ebe6;
+  --focus:#2a6f63;
+  --shadow:0 1px 2px rgba(20,48,43,.05),0 1px 1px rgba(20,48,43,.03);
+  --shadow-lg:0 12px 32px -12px rgba(20,48,43,.18),0 2px 6px rgba(20,48,43,.06);
+  --r:12px;
+  --r-sm:8px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:"Hind Siliguri","Noto Sans Bengali","Kalpurush",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;min-height:100vh;
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:6px}
+[hidden]{display:none!important}
+.num{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  background:var(--ink);color:#eef4f1;
+  height:64px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  position:sticky;top:0;z-index:20;
+  box-shadow:0 1px 0 rgba(255,255,255,.04),0 6px 20px -10px rgba(20,48,43,.5);
+}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{
+  width:34px;height:34px;border-radius:9px;background:linear-gradient(160deg,#2c6a5c,#173a33);
+  display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);flex-shrink:0
+}
+.logo svg{width:18px;height:18px}
+.brand-text{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.brand-text strong{font-size:1.08rem;font-weight:700;letter-spacing:.2px}
+.brand-text span{font-size:.76rem;color:#9fbbb2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  border:1px solid transparent;border-radius:var(--r-sm);padding:9px 16px;
+  font-weight:600;font-size:.88rem;line-height:1;white-space:nowrap;
+  background:var(--ink);color:#fff;
+  transition:background .15s,border-color .15s,box-shadow .15s,transform .05s;
+  box-shadow:0 1px 1px rgba(20,48,43,.12);
+}
+.btn:hover{background:var(--ink-2)}
+.btn:active{transform:translateY(1px)}
+.btn svg{width:15px;height:15px;flex-shrink:0}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--line);box-shadow:none}
+.btn.ghost:hover{background:#fff;border-color:#cdd4c9}
+.topbar .btn.ghost{color:#eef4f1;border-color:rgba(255,255,255,.18)}
+.topbar .btn.ghost:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.28)}
+.btn.danger{background:#fff;color:var(--expense);border-color:#ecd3ca;box-shadow:none}
+.btn.danger:hover{background:var(--expense-bg);border-color:#e3bfb3}
+.btn.small{padding:7px 12px;font-size:.82rem}
+.btn.block{width:100%;padding:11px 16px}
+.btn.primary-lg{padding:11px 22px;font-size:.92rem}
+
+/* ---------- layout ---------- */
+.shell{display:grid;grid-template-columns:296px minmax(0,1fr);flex:1}
+.side{
+  background:var(--surface);border-right:1px solid var(--line);
+  padding:26px 20px;display:flex;flex-direction:column;gap:26px;
+}
+.main{padding:30px 36px 44px;max-width:1120px;width:100%;min-width:0}
+
+/* ---------- sidebar ---------- */
+.kicker{font-size:.78rem;font-weight:600;color:var(--muted);margin:0 0 4px}
+.grand{font-size:1.75rem;font-weight:700;letter-spacing:-.4px;line-height:1.2;overflow-wrap:anywhere}
+.side-title{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px}
+.side-title h2{font-size:.78rem;font-weight:700;color:var(--muted);margin:0;letter-spacing:.3px;text-transform:none}
+.count-pill{font-size:.72rem;font-weight:700;color:var(--muted);background:var(--bg);border-radius:999px;padding:2px 8px}
+.fund-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.fund{
+  width:100%;display:flex;align-items:center;gap:11px;background:none;border:1px solid transparent;
+  border-radius:var(--r-sm);padding:9px 10px;text-align:left;transition:background .12s,border-color .12s;
+}
+.fund:hover{background:var(--bg)}
+.fund.on{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:var(--shadow)}
+.avatar{
+  width:32px;height:32px;border-radius:9px;background:#e6ece8;color:var(--ink);
+  display:grid;place-items:center;font-weight:700;font-size:.85rem;flex-shrink:0
+}
+.fund.on .avatar{background:rgba(255,255,255,.14);color:#fff}
+.fund-text{display:flex;flex-direction:column;min-width:0;flex:1}
+.fund .fname{font-weight:600;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fund .famt{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.fund.on .famt{color:#b9d2c9}
+.empty-note{color:var(--muted);font-size:.86rem;margin:0;padding:8px 2px}
+.new-fund{display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line);padding-top:22px}
+.new-fund h2{margin:0;font-size:.92rem;font-weight:700}
+
+/* ---------- fields ---------- */
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field > span{font-size:.8rem;color:var(--muted);font-weight:600}
+input[type=text],input[type=number],input[type=date],select{
+  width:100%;border:1px solid #d6dbd3;border-radius:var(--r-sm);padding:10px 12px;background:#fff;color:var(--text);
+  transition:border-color .12s,box-shadow .12s;min-width:0;font-size:16px;
+}
+input::placeholder{color:#aab3ad}
+input:focus,select:focus{border-color:var(--focus);box-shadow:0 0 0 3px rgba(42,111,99,.14);outline:none}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ---------- segmented control ---------- */
+.segment{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.segment input{position:absolute;opacity:0;pointer-events:none}
+.segment label{text-align:center;padding:9px 8px;border-radius:7px;font-weight:600;font-size:.88rem;color:var(--muted);cursor:pointer;transition:all .15s}
+.segment input:checked + label.in{background:#fff;color:var(--income);box-shadow:0 1px 3px rgba(20,48,43,.1),inset 0 0 0 1px #c5e2d5}
+.segment input:checked + label.out{background:#fff;color:var(--expense);box-shadow:0 1px 3px rgba(20,48,43,.1),inset 0 0 0 1px #efd2c7}
+.segment input:focus-visible + label{outline:2px solid var(--focus);outline-offset:1px}
+
+/* ---------- fund header ---------- */
+.fund-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:.78rem;color:var(--muted);font-weight:600;margin:0 0 2px}
+.fund-head h2{margin:0;font-size:1.6rem;font-weight:700;letter-spacing:-.3px;overflow-wrap:anywhere;line-height:1.25}
+.fund-head .sub{color:var(--muted);font-size:.86rem;margin-top:4px}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:14px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;min-width:0;box-shadow:var(--shadow)}
+.stat small{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:6px}
+.stat small i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.stat b{display:block;font-size:1.4rem;font-weight:700;letter-spacing:-.3px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.stat.primary{background:linear-gradient(155deg,#1b3f38,#14302b);border-color:#14302b;color:#fff;box-shadow:var(--shadow-lg)}
+.stat.primary small{color:#a6c4ba}
+.stat.primary b{font-size:2.05rem;letter-spacing:-.5px}
+.stat.primary .neg{color:#ffb9a4!important}
+.neg{color:var(--expense)!important}
+
+/* ---------- panels ---------- */
+.panels{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:start;margin-bottom:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;min-width:0;box-shadow:var(--shadow)}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 18px;gap:12px}
+.card-head h3{margin:0;font-size:1rem;font-weight:700}
+.card-head small{color:var(--muted);font-size:.8rem}
+
+/* ---------- entry form ---------- */
+.entry-form{display:flex;flex-direction:column;gap:14px}
+.form-foot{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:4px}
+
+/* ---------- breakdown ---------- */
+.cat-row{display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:14px;align-items:center;padding:10px 0}
+.cat-row + .cat-row{border-top:1px solid var(--line-2)}
+.cat-row .name{font-size:.88rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track{height:7px;background:#eceee8;border-radius:99px;overflow:hidden}
+.track i{display:block;height:100%;background:linear-gradient(90deg,#c2593f,#a8422c);border-radius:99px}
+.cat-row .val{font-size:.88rem;font-weight:700;text-align:right;white-space:nowrap}
+.cat-row .pct{display:block;color:var(--muted);font-size:.74rem;font-weight:500}
+
+/* ---------- ledger ---------- */
+.ledger{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.ledger-head{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap}
+.ledger-head h3{margin:0;font-size:1rem;font-weight:700}
+.ledger-head small{color:var(--muted);font-size:.8rem}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line-2);vertical-align:middle;font-size:.9rem}
+th{font-size:.76rem;color:var(--muted);font-weight:600;background:#fafbf8;white-space:nowrap;letter-spacing:.2px}
+tr:last-child td{border-bottom:0}
+tbody tr{transition:background .12s}
+tbody tr:hover td{background:#fbfcfa}
+td.r,th.r{text-align:right}
+.date{color:var(--muted);white-space:nowrap;font-size:.84rem}
+.desc{font-weight:600;overflow-wrap:anywhere}
+.cat-tag{display:inline-block;font-size:.72rem;color:var(--ink-soft);background:#eef3f0;border-radius:6px;padding:2px 8px;margin-top:4px;font-weight:600}
+.amt-in{color:var(--income);font-weight:700}
+.amt-out{color:var(--expense);font-weight:700}
+.run{font-weight:600}
+.run.neg{color:var(--expense)!important}
+.empty-row{padding:42px 16px;text-align:center;color:var(--muted)}
+.hint{font-size:.8rem;color:var(--muted);margin:16px 0 0;display:flex;gap:8px;align-items:flex-start}
+.hint svg{width:15px;height:15px;flex-shrink:0;margin-top:2px;color:var(--faint)}
+
+/* ---------- welcome ---------- */
+.welcome{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:64px 32px;text-align:center;box-shadow:var(--shadow)
+}
+.welcome .big-logo{width:56px;height:56px;border-radius:16px;background:var(--ink);display:grid;place-items:center;margin:0 auto 18px}
+.welcome .big-logo svg{width:26px;height:26px}
+.welcome h2{margin:0 0 8px;font-size:1.35rem;letter-spacing:-.2px}
+.welcome p{margin:0 auto;max-width:440px;color:var(--muted)}
+
+/* ---------- footer ---------- */
+.footer{
+  border-top:1px solid var(--line);background:var(--surface);
+  padding:14px 28px;display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;
+  font-size:.8rem;color:var(--muted);
+}
+.footer strong{color:var(--text);font-weight:700}
+.dev-badge{
+  display:inline-flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);
+  border-radius:999px;padding:4px 12px 4px 4px;color:var(--text);font-weight:600;font-size:.8rem
+}
+.dev-badge i{
+  width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;
+  display:inline-grid;place-items:center;font-style:normal;font-size:.72rem;font-weight:700
+}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);opacity:0;pointer-events:none;
+  background:var(--ink);color:#fff;border-radius:999px;padding:10px 18px;font-size:.88rem;font-weight:600;
+  box-shadow:var(--shadow-lg);transition:opacity .2s,transform .2s;z-index:50;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 32px)
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast i{width:8px;height:8px;border-radius:50%;background:#7fd1ae;flex-shrink:0}
+.toast.err{background:var(--expense)}
+.toast.err i{background:#ffd3c6}
+
+/* ---------- tablet ---------- */
+@media (max-width:1024px){
+  .shell{grid-template-columns:260px minmax(0,1fr)}
+  .main{padding:24px 24px 32px}
+  .panels{grid-template-columns:1fr}
+}
+
+/* ---------- mobile / small tablet ---------- */
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr}
+  .side{border-right:0;border-bottom:1px solid var(--line);padding:18px 16px;gap:16px}
+  .fund-list{flex-direction:row;overflow-x:auto;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .fund-list::-webkit-scrollbar{display:none}
+  .fund{min-width:max-content;width:auto;padding:8px 12px 8px 8px}
+  .fund-text .famt{display:none}
+  .new-fund{border-top:0;padding-top:0}
+}
+
+/* ---------- phone ---------- */
+@media (max-width:640px){
+  .topbar{height:auto;min-height:58px;padding:10px 14px;flex-wrap:wrap;row-gap:8px}
+  .brand-text span{display:none}
+  .actions .btn{padding:7px 12px}
+  .main{padding:16px 12px 28px}
+  .stats{grid-template-columns:1fr;gap:10px;margin-bottom:16px}
+  .stat{padding:15px 18px}
+  .stat.primary b{font-size:1.8rem}
+  .stat b{font-size:1.2rem}
+  .fund-head{margin-bottom:16px;padding-bottom:14px}
+  .fund-head h2{font-size:1.3rem}
+  .card{padding:18px 16px}
+  .grid-2{grid-template-columns:1fr}
+  .welcome{padding:40px 20px}
+  .form-foot .btn{width:100%}
+
+  .ledger-head{padding:14px 16px}
+  .table-scroll{overflow:visible}
+  table{min-width:0}
+  thead{display:none}
+  tbody,tr{display:block}
+  tr{
+    display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:3px;
+    padding:14px 16px;border-bottom:1px solid var(--line-2)
+  }
+  tr:last-child{border-bottom:0}
+  tbody tr:hover td{background:none}
+  td{padding:0;border:0;font-size:.88rem}
+  td:empty{display:none}
+  td:nth-child(1){grid-column:1;grid-row:1}
+  td:nth-child(2){grid-column:1;grid-row:2;min-width:0}
+  td:nth-child(3),td:nth-child(4){grid-column:2;grid-row:2;text-align:right;align-self:center}
+  td:nth-child(5){grid-column:1;grid-row:3;font-size:.8rem;color:var(--muted);margin-top:6px}
+  td:nth-child(5)::before{content:"বাকি: "}
+  td:nth-child(5) .run{font-size:.8rem;color:var(--muted)}
+  td:nth-child(5) .run.neg{color:var(--expense)!important}
+  td:nth-child(6){grid-column:2;grid-row:3;text-align:right;align-self:end;margin-top:6px}
+  td:nth-child(6) .btn{padding:5px 10px;font-size:.78rem}
+  .cat-tag{margin-top:4px}
+  .cat-row{grid-template-columns:70px minmax(0,1fr) auto;gap:10px}
+  .footer{justify-content:center;text-align:center;padding:14px 16px 20px}
+}
+
+@media (max-width:380px){
+  .actions .btn{padding:6px 9px;font-size:.78rem}
+  .brand-text strong{font-size:1rem}
+  .stat.primary b{font-size:1.6rem}
+}
+
+/* ---------- print ---------- */
+@media print{
+  body{background:#fff}
+  .topbar,.side,.actions,.footer,.toast,.fund-head .btn,.form-foot,.card:has(#txForm),td:nth-child(6),th:last-child{display:none!important}
+  .shell{display:block}
+  .main{padding:0;max-width:none}
+  .stat,.card,.ledger{box-shadow:none}
+  table{min-width:0}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#e7f3ee" stroke-width="2.4" stroke-linecap="round"><path d="M6 4v16M18 4v16M6 12h12"/></svg>
+    </div>
+    <div class="brand-text">
+      <strong>হিসাব</strong>
+      <span>ফান্ড ও খরচের খাতা</span>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn ghost small" id="exportBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v3h16v-3"/></svg>
+      ব্যাকআপ
+    </button>
+    <label class="btn ghost small" style="cursor:pointer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9m0 0 4 4m-4-4-4 4M4 7V4h16v3"/></svg>
+      আমদানি
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </label>
+  </div>
+</header>
+
+<div class="shell">
+
+  <aside class="side">
+    <div>
+      <p class="kicker">সব ফান্ড মিলিয়ে বাকি</p>
+      <div class="grand num" id="grandTotal">৳ ০</div>
+    </div>
+
+    <div>
+      <div class="side-title">
+        <h2>আমার ফান্ড</h2>
+        <span class="count-pill" id="fundCount">০</span>
+      </div>
+      <ul class="fund-list" id="fundList"></ul>
+    </div>
+
+    <form class="new-fund" id="fundForm" autocomplete="off">
+      <h2>নতুন ফান্ড খুলুন</h2>
+      <label class="field"><span>ফান্ডের নাম</span>
+        <input type="text" id="fName" placeholder="যেমন: বাড়ি মেরামত" required>
+      </label>
+      <label class="field"><span>শুরুর জমা (ঐচ্ছিক)</span>
+        <input type="number" id="fOpen" min="0" step="any" placeholder="০">
+      </label>
+      <button class="btn block" type="submit">ফান্ড খুলুন</button>
+    </form>
+  </aside>
+
+  <main class="main">
+
+    <section class="welcome" id="welcome" hidden>
+      <div class="big-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#e7f3ee" stroke-width="2.4" stroke-linecap="round"><path d="M6 4v16M18 4v16M6 12h12"/></svg>
+      </div>
+      <h2>স্বাগতম</h2>
+      <p>বাম দিকের ফর্ম থেকে একটি ফান্ড খুলুন, যেমন “বাড়ি মেরামত” বা “মাসিক খরচ”। তারপর সেখানে টাকা জমা ও খরচ লিখে রাখুন।</p>
+    </section>
+
+    <div id="panel" hidden>
+
+      <div class="fund-head">
+        <div>
+          <p class="eyebrow">বর্তমান ফান্ড</p>
+          <h2 id="fundName"></h2>
+          <div class="sub" id="fundSub"></div>
+        </div>
+        <button class="btn danger small" id="delFundBtn" type="button">ফান্ড মুছুন</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat primary">
+          <small>এখন বাকি আছে</small>
+          <b class="num" id="bal">৳ ০</b>
+        </div>
+        <div class="stat">
+          <small><i style="background:var(--income)"></i>মোট জমা</small>
+          <b class="num" id="totIn">৳ ০</b>
+        </div>
+        <div class="stat">
+          <small><i style="background:var(--expense)"></i>মোট খরচ</small>
+          <b class="num" id="totOut">৳ ০</b>
+        </div>
+      </div>
+
+      <div class="panels">
+        <section class="card">
+          <div class="card-head"><h3>নতুন লেনদেন</h3></div>
+          <form class="entry-form" id="txForm" autocomplete="off">
+            <div class="segment" role="radiogroup" aria-label="লেনদেনের ধরন">
+              <input type="radio" name="type" id="tIn" value="in" checked>
+              <label class="in" for="tIn">টাকা জমা</label>
+              <input type="radio" name="type" id="tOut" value="out">
+              <label class="out" for="tOut">খরচ</label>
+            </div>
+            <div class="grid-2">
+              <label class="field"><span>টাকার পরিমাণ</span>
+                <input type="number" id="amt" min="0" step="any" placeholder="০" required>
+              </label>
+              <label class="field"><span>তারিখ</span>
+                <input type="date" id="date" required>
+              </label>
+            </div>
+            <label class="field"><span>ধরন</span>
+              <select id="cat"></select>
+            </label>
+            <label class="field"><span>বিবরণ</span>
+              <input type="text" id="note" placeholder="যেমন: বাজার, রিকশা ভাড়া, বিদ্যুৎ বিল">
+            </label>
+            <div class="form-foot">
+              <button class="btn primary-lg" type="submit">যোগ করুন</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h3>খরচ কোথায় গেল</h3>
+            <small id="breakdownNote"></small>
+          </div>
+          <div id="breakdown"></div>
+        </section>
+      </div>
+
+      <section class="ledger">
+        <div class="ledger-head">
+          <h3>লেনদেনের তালিকা</h3>
+          <small id="txCount"></small>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>তারিখ</th>
+                <th>বিবরণ</th>
+                <th class="r">জমা</th>
+                <th class="r">খরচ</th>
+                <th class="r">বাকি</th>
+                <th class="r" style="width:76px"></th>
+              </tr>
+            </thead>
+            <tbody id="txBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+        তথ্য এই ব্রাউজারেই সংরক্ষিত থাকে। ডিভাইস বদলের আগে “ব্যাকআপ” দিয়ে ফাইল সংরক্ষণ করে রাখুন।
+      </p>
+    </div>
+
+  </main>
+</div>
+
+<footer class="footer">
+  <span>© <span id="year"></span> <strong>copyright</strong>@rockyhasanofc</span>
+  
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><i></i><span id="toastText"></span></div>
+
+<script>
+const KEY = 'hisab-v1';
+const CATS = {
+  out: ['খাবার','যাতায়াত','বাজার','বিল','চিকিৎসা','পড়াশোনা','অন্যান্য'],
+  in:  ['বেতন','ধার নেওয়া','ফেরত','উপহার','অন্যান্য']
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const today = () => new Date().toISOString().slice(0, 10);
+const fmt = n => '৳ ' + Number(n).toLocaleString('bn-BD', {maximumFractionDigits: 2});
+const initial = name => [...name.trim()][0] || '?';
+
+let state = load();
+let activeId = state.funds[0] ? state.funds[0].id : null;
+
+function load(){
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && Array.isArray(s.funds) && Array.isArray(s.txns)) return s;
+  } catch (e) {}
+  return {funds: [], txns: []};
+}
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch (e) { toast('এই ব্রাউজারে সংরক্ষণ করা যাচ্ছে না। ব্যাকআপ নিন।', 'err'); }
+}
+function txns(fundId){
+  return state.txns.filter(t => t.fund === fundId)
+    .sort((a, b) => a.date.localeCompare(b.date) || a.at - b.at);
+}
+function fundTotals(fundId){
+  let inn = 0, out = 0;
+  txns(fundId).forEach(t => t.type === 'in' ? inn += t.amount : out += t.amount);
+  return {inn, out, bal: inn - out};
+}
+function balance(fundId){ return fundTotals(fundId).bal; }
+
+function toast(text, kind){
+  const el = $('#toast');
+  $('#toastText').textContent = text;
+  el.className = 'toast show' + (kind === 'err' ? ' err' : '');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+function renderFunds(){
+  const list = $('#fundList');
+  $('#fundCount').textContent = state.funds.length.toLocaleString('bn-BD');
+  list.innerHTML = state.funds.length
+    ? state.funds.map(f => {
+        const b = balance(f.id);
+        return `<li><button class="fund ${f.id === activeId ? 'on' : ''}" type="button" onclick="selectFund('${f.id}')">
+          <span class="avatar">${esc(initial(f.name))}</span>
+          <span class="fund-text">
+            <span class="fname">${esc(f.name)}</span>
+            <span class="famt num ${b < 0 ? 'neg' : ''}">${fmt(b)}</span>
+          </span></button></li>`;
+      }).join('')
+    : '<li class="empty-note">এখনো কোনো ফান্ড নেই।</li>';
+  $('#grandTotal').textContent = fmt(state.funds.reduce((s, f) => s + balance(f.id), 0));
+}
+
+function renderMain(){
+  const f = state.funds.find(x => x.id === activeId);
+  $('#welcome').hidden = !!f;
+  $('#panel').hidden = !f;
+  if (!f) return;
+
+  const list = txns(f.id);
+  const t = fundTotals(f.id);
+  $('#fundName').textContent = f.name;
+  $('#fundSub').textContent = list.length ? `${list.length}টি লেনদেন লেখা হয়েছে` : 'এখনো কোনো লেনদেন নেই';
+  $('#bal').textContent = fmt(t.bal);
+  $('#bal').className = 'num ' + (t.bal < 0 ? 'neg' : '');
+  $('#totIn').textContent = fmt(t.inn);
+  $('#totOut').textContent = fmt(t.out);
+
+  const cats = {};
+  list.filter(x => x.type === 'out').forEach(x => cats[x.cat] = (cats[x.cat] || 0) + x.amount);
+  const entries = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+  const max = entries[0] ? entries[0][1] : 1;
+  const totalOut = t.out || 1;
+  $('#breakdownNote').textContent = entries.length ? `মোট ${fmt(t.out)}` : '';
+  $('#breakdown').innerHTML = entries.length
+    ? entries.map(([c, a]) => `<div class="cat-row">
+        <span class="name">${esc(c)}</span>
+        <div class="track"><i style="width:${(a / max * 100).toFixed(1)}%"></i></div>
+        <div class="val num">${fmt(a)}<span class="pct">${(a / totalOut * 100).toFixed(0)}%</span></div>
+      </div>`).join('')
+    : '<p class="empty-note">এখনো কোনো খরচ লেখা হয়নি।</p>';
+
+  let run = 0;
+  const rows = list.map(x => {
+    run += x.type === 'in' ? x.amount : -x.amount;
+    return {...x, running: run};
+  }).reverse();
+  $('#txCount').textContent = rows.length ? `${rows.length}টি এন্ট্রি` : '';
+  $('#txBody').innerHTML = rows.length
+    ? rows.map(x => `<tr>
+        <td class="date num">${esc(x.date)}</td>
+        <td><div class="desc">${esc(x.note || x.cat)}</div><span class="cat-tag">${esc(x.cat)}</span></td>
+        <td class="r num">${x.type === 'in' ? `<span class="amt-in">${fmt(x.amount)}</span>` : ''}</td>
+        <td class="r num">${x.type === 'out' ? `<span class="amt-out">${fmt(x.amount)}</span>` : ''}</td>
+        <td class="r num"><span class="run ${x.running < 0 ? 'neg' : ''}">${fmt(x.running)}</span></td>
+        <td class="r"><button class="btn danger small" type="button" onclick="delTxn('${x.id}')" aria-label="এই লেনদেন মুছুন">মুছুন</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" class="empty-row">এই ফান্ডে এখনো কোনো লেনদেন নেই।</td></tr>';
+}
+
+function render(){ renderFunds(); renderMain(); }
+
+function setCats(){
+  const type = document.querySelector('input[name=type]:checked').value;
+  $('#cat').innerHTML = CATS[type].map(c => `<option>${esc(c)}</option>`).join('');
+}
+
+function selectFund(id){ activeId = id; render(); }
+
+function delTxn(id){
+  if (!confirm('এই লেনদেনটি মুছে ফেলবেন?')) return;
+  state.txns = state.txns.filter(t => t.id !== id);
+  save(); render();
+  toast('লেনদেন মুছে ফেলা হয়েছে।');
+}
+
+function delFund(){
+  const f = state.funds.find(x => x.id === activeId);
+  if (!f) return;
+  if (!confirm(`“${f.name}” ফান্ড ও এর সব লেনদেন মুছে যাবে। নিশ্চিত?`)) return;
+  state.funds = state.funds.filter(x => x.id !== f.id);
+  state.txns = state.txns.filter(t => t.fund !== f.id);
+  activeId = state.funds[0] ? state.funds[0].id : null;
+  save(); render();
+  toast('ফান্ড মুছে ফেলা হয়েছে।');
+}
+
+$('#fundForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('#fName').value.trim();
+  const open = parseFloat($('#fOpen').value) || 0;
+  if (!name) return;
+  const f = {id: uid(), name};
+  state.funds.push(f);
+  if (open > 0) state.txns.push({id: uid(), fund: f.id, type: 'in', amount: open, cat: 'শুরুর জমা', note: 'শুরুর জমা', date: today(), at: Date.now()});
+  activeId = f.id;
+  save();
+  e.target.reset();
+  render();
+  toast(`“${name}” ফান্ড খোলা হয়েছে।`);
+});
+
+$('#txForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = state.funds.find(x => x.id === activeId);
+  if (!f) return;
+  const type = document.querySelector('input[name=type]:checked').value;
+  const amount = Math.round(parseFloat($('#amt').value) * 100) / 100;
+  if (!(amount > 0)) return toast('টাকার পরিমাণ সঠিকভাবে লিখুন।', 'err');
+  const left = balance(f.id);
+  if (type === 'out' && amount > left)
+    return toast(`এই ফান্ডে ${fmt(left)} আছে। এর বেশি খরচ লেখা যাবে না।`, 'err');
+  state.txns.push({
+    id: uid(), fund: f.id, type, amount,
+    cat: $('#cat').value,
+    note: $('#note').value.trim(),
+    date: $('#date').value || today(),
+    at: Date.now()
+  });
+  save();
+  $('#amt').value = '';
+  $('#note').value = '';
+  render();
+  toast(type === 'in' ? 'টাকা জমা হয়েছে।' : 'খরচ লেখা হয়েছে।');
+});
+
+document.querySelectorAll('input[name=type]').forEach(r => r.addEventListener('change', setCats));
+$('#delFundBtn').addEventListener('click', delFund);
+$('#date').value = today();
+$('#year').textContent = new Date().getFullYear();
+
+$('#exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `hisab-backup-${today()}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('ব্যাকআপ ফাইল ডাউনলোড হচ্ছে।');
+});
+
+$('#importFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const s = JSON.parse(reader.result);
+      if (!Array.isArray(s.funds) || !Array.isArray(s.txns)) throw new Error('bad');
+      if (!confirm('বর্তমান তথ্যের জায়গায় ফাইলের তথ্য বসবে। চালিয়ে যাবেন?')) return;
+      state = s;
+      activeId = state.funds[0] ? state.funds[0].id : null;
+      save(); render();
+      toast('ব্যাকআপ আনা হয়েছে।');
+    } catch (err) {
+      toast('এই ফাইলটি সঠিক ব্যাকআপ নয়।', 'err');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+setCats();
+render();
+</script>
+</body>
+</html>
